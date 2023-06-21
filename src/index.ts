@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { auth_middleware } from "./auth/auth";
+import { MyError } from "./my_error";
 
 type Context = {
   Bindings: {
@@ -13,12 +14,22 @@ type Context = {
 const app = new Hono<Context>();
 
 app.onError((e, c) => {
-  console.error(e);
-  return c.json({ error: e.message }, 500);
+  e instanceof MyError ? c.status(e.status) : c.status(500);
+  return c.json({
+    message: e.message
+  });
+});
+
+app.notFound((c) => {
+  throw new MyError("Not Found", 404);
 });
 
 app.get("/", async (c) => {
   return c.json({ message: "Hello from worker!!!" });
+});
+
+app.get("/error", async (c) => {
+  throw new MyError("This is a custom error", 400);
 });
 
 app.get("/users", async (c) => {
