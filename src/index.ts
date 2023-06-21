@@ -18,7 +18,7 @@ app.onError((e, c) => {
 });
 
 app.get("/", async (c) => {
-  return c.json({ message: "Hello World!" });
+  return c.json({ message: "Hello from worker" });
 });
 
 app.get("/users", async (c) => {
