@@ -1,0 +1,8 @@
+name = "timetable-app-api"
+compatibility_date = "2023-01-01"
+main = "src/index.ts"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "timetable-db"
+database_id = "712d8bb7-1af1-4314-8fe1-988fe31801cd"

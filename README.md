@@ -1,1 +1,8 @@
-# timetable-app-api
+```
+npm install
+npm run dev
+```
+
+```
+npm run deploy
+```
