@@ -14,9 +14,10 @@ type Context = {
 const app = new Hono<Context>();
 
 app.onError((e, c) => {
-  e instanceof MyError ? c.status(e.status) : c.status(500);
+  const status_code = e instanceof MyError ? e.status : 500;
+  c.status(status_code);
   return c.json({
-    status: c.status,
+    status: status_code,
     message: e.message,
   });
 });
