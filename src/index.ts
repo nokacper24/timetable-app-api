@@ -1,8 +1,20 @@
 import { Hono } from "hono";
-import { auth_middleware } from "./auth/auth";
 import { MyError } from "./my_error";
+import { login_form } from "./auth/login_form";
+import { User } from "./models";
+import { auth_middleware } from "./auth/auth";
+import { setCookie } from "hono/cookie";
+
+export const COOKIE_NAME = 'session';
 
 type Context = {
+  Bindings: {
+    DB: D1Database;
+  };
+  Variables: {};
+};
+
+type ContextLoggedIn = {
   Bindings: {
     DB: D1Database;
   };
@@ -12,6 +24,18 @@ type Context = {
 };
 
 const app = new Hono<Context>();
+export const priv = new Hono<ContextLoggedIn>();
+// priv.use('*', auth_middleware);
+
+priv.get('/me', auth_middleware, async (c) => {
+  const user = c.get('user');
+  return c.json(user);
+});
+
+priv.get('/setcookie', async (c) => {
+  setCookie(c, COOKIE_NAME, 'sessionid');
+  return c.json({ message: 'cookie set' });
+});
 
 app.onError((e, c) => {
   const status_code = e instanceof MyError ? e.status : 500;
@@ -27,66 +51,20 @@ app.notFound((c) => {
 });
 
 app.get("/", async (c) => {
-  return c.json({ message: "Hello from worker!!!" });
+  throw new MyError("Nothing here", 404);
 });
 
-app.get("/error", async (c) => {
-  throw new MyError("This is a custom error", 400);
-});
 
-app.get("/users", async (c) => {
-  let user: User = await c.env.DB.prepare("SELECT * FROM users").first();
-  return c.json(user);
-});
-
-app.get("/user", auth_middleware, async (c) => {
-  const user = c.get("user");
-  return c.json(user);
-});
 
 app.get("/login-form", async (c) => {
-  const html = `
-    <!DOCTYPE html>
-<html>
-<head>
-  <title>Login Form</title>
-</head>
-<body>
-  <div class="container">
-    <h2>Login</h2>
-    <form id="loginForm">
-      <input type="text" id="username" placeholder="Username" required><br>
-      <input type="password" id="password" placeholder="Password" required><br>
-      <button type="submit">Login</button>
-    </form>
-  </div>
-
-  <script>
-    document.getElementById("loginForm").addEventListener("submit", function(event) {
-      event.preventDefault();
-      var username = document.getElementById("username").value;
-      var password = document.getElementById("password").value;
-
-      // Here you can perform your API login request using the username and password
-      // For demonstration purposes, we'll just log the values to the console
-      console.log("Username: " + username);
-      console.log("Password: " + password);
-
-      // Reset the form
-      document.getElementById("loginForm").reset();
-    });
-  </script>
-</body>
-</html>
-`;
-  return c.html(html);
+  
+  return c.html(login_form);
 });
 
+
+
+
+app.route('/priv', priv);
 export default app;
 
-export interface User {
-  id: number;
-  username: string;
-  passhash: string;
-  role: string;
-}
+
