@@ -7,14 +7,10 @@ CREATE TABLE users (
     CONSTRAINT role CHECK (role IN ('user', 'admin'))
 );
 
-DROB TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS sessions;
 CREATE TABLE sessions (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     session_secret TEXT NOT NULL UNIQUE,
     userid INTEGER NOT NULL,
     CONSTRAINT sessions_userid_fk FOREIGN KEY (userid) REFERENCES users(id)
 );
-
-
-
-INSERT INTO users (username, passwordhash) VALUES ('myusername', 'somehash');
