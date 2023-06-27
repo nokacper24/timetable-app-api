@@ -1,6 +1,7 @@
 export interface UserFull {
+    id: number;
     username: string;
-    passhash: string;
+    passwordhash: string;
     role: string;
   }
 

@@ -1,10 +1,11 @@
 import { Hono } from "hono";
 import { MyError } from "./my_error";
-import { login_form } from "./auth/login_form";
 import { priv } from "./auth/auth";
 import { setCookie } from "hono/cookie";
+import { UserFull } from "./models";
+import bcrypt from "bcryptjs";
 
-export const COOKIE_NAME = 'session';
+export const COOKIE_NAME = "session";
 
 type Context = {
   Bindings: {
@@ -12,8 +13,6 @@ type Context = {
   };
   Variables: {};
 };
-
-
 
 const app = new Hono<Context>();
 
@@ -34,19 +33,38 @@ app.get("/", async (c) => {
   throw new MyError("Nothing here", 404);
 });
 
+app.post("/login", async (c) => {
+  let data = await c.req.json();
+  if (!data.username || !data.password) {
+    throw new MyError("Invalid login data", 400);
+  }
+  let fulluser: UserFull = await c.env.DB.prepare(
+    `SELECT id, username, passwordhash, role
+    FROM users WHERE username = ?`
+  )
+    .bind(data.username)
+    .first();
+  if (!fulluser) {
+    throw new MyError("Invalid login data", 400);
+  }
 
-
-app.get("/login-form", async (c) => {
-  
-  return c.html(login_form);
+  let correct_creds = await bcrypt.compare(
+    data.password,
+    fulluser.passwordhash
+  );
+  if (!correct_creds) {
+    throw new MyError("Invalid login data", 400);
+  }
+  const sessionid = crypto.randomUUID();
+  await c.env.DB.prepare(
+    `INSERT INTO sessions (session_secret, userid)
+        VALUES (?, ?)`
+  )
+    .bind(sessionid, fulluser.id)
+    .run();
+  setCookie(c, COOKIE_NAME, sessionid, { httpOnly: true, secure: true });
+  return c.json({ message: "logged in" });
 });
 
-app.get("/setcookie", async (c) => { // TODO remove, testing only
-  setCookie(c, COOKIE_NAME, "sessionid");
-  return c.json({ message: "cookie set" });
-});
-
-app.route('/priv', priv); // add all routes from /priv to app
+app.route("/priv", priv); // add all routes from /priv to app
 export default app;
-
-

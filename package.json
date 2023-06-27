@@ -4,10 +4,14 @@
     "deploy": "wrangler deploy --minify src/index.ts"
   },
   "dependencies": {
-    "hono": "^3.2.5"
+    "bcryptjs": "^2.4.3",
+    "hono": "^3.2.5",
+    "node": "^20.3.1"
   },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20230518.0",
+    "@types/bcryptjs": "^2.4.2",
+    "@types/node": "^20.3.2",
     "wrangler": "^3.1.1"
   }
 }
