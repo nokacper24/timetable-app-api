@@ -1,9 +1,7 @@
 import { Hono } from "hono";
 import { MyError } from "./my_error";
 import { login_form } from "./auth/login_form";
-import { User } from "./models";
-import { auth_middleware } from "./auth/auth";
-import { setCookie } from "hono/cookie";
+import { priv } from "./auth/auth";
 
 export const COOKIE_NAME = 'session';
 
@@ -14,28 +12,9 @@ type Context = {
   Variables: {};
 };
 
-type ContextLoggedIn = {
-  Bindings: {
-    DB: D1Database;
-  };
-  Variables: {
-    user: User;
-  };
-};
+
 
 const app = new Hono<Context>();
-export const priv = new Hono<ContextLoggedIn>();
-// priv.use('*', auth_middleware);
-
-priv.get('/me', auth_middleware, async (c) => {
-  const user = c.get('user');
-  return c.json(user);
-});
-
-priv.get('/setcookie', async (c) => {
-  setCookie(c, COOKIE_NAME, 'sessionid');
-  return c.json({ message: 'cookie set' });
-});
 
 app.onError((e, c) => {
   const status_code = e instanceof MyError ? e.status : 500;
@@ -47,7 +26,7 @@ app.onError((e, c) => {
 });
 
 app.notFound((c) => {
-  throw new MyError("Not Found", 404);
+  throw new MyError("Route not Found", 404);
 });
 
 app.get("/", async (c) => {
@@ -62,9 +41,7 @@ app.get("/login-form", async (c) => {
 });
 
 
-
-
-app.route('/priv', priv);
+app.route('/priv', priv); // add all routes from /priv to app
 export default app;
 
 

@@ -1,5 +1,5 @@
-import { Context } from "hono";
-import { getCookie } from 'hono/cookie'
+import { Context, Hono } from "hono";
+import { getCookie, setCookie } from 'hono/cookie'
 import { User } from "../models";
 import { MyError } from "../my_error";
 import { COOKIE_NAME } from "..";
@@ -27,4 +27,26 @@ export const auth_middleware = async (c: Context, next: () => Promise<void>) => 
 
 };
 
+type ContextLoggedIn = {
+    Bindings: {
+      DB: D1Database;
+    };
+    Variables: {
+      user: User;
+    };
+  };
 
+export const priv = new Hono<ContextLoggedIn>();
+// priv.use('*', auth_middleware);
+
+
+
+priv.get('/me', auth_middleware, async (c) => {
+    const user = c.get('user');
+    return c.json(user);
+  });
+
+priv.get('/setcookie', async (c) => {
+  setCookie(c, COOKIE_NAME, 'sessionid');
+  return c.json({ message: 'cookie set' });
+});
