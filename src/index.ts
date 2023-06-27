@@ -66,5 +66,22 @@ app.post("/login", async (c) => {
   return c.json({ message: "logged in" });
 });
 
+app.post("/register", async (c) => {
+  let data = await c.req.json();
+  if (!data.username || !data.password) {
+    throw new MyError("Invalid register data", 400);
+  }
+  const salt = await bcrypt.genSalt();
+  let passwordhash = await bcrypt.hash(data.password, salt);
+  let _res = await c.env.DB.prepare(
+    `INSERT INTO users (username, passwordhash)
+        VALUES (?, ?);`
+  )
+    .bind(data.username, passwordhash).run();
+    // TODO catch db errors, duplicate username?
+    
+  return c.json({ message: "registered" });
+});
+
 app.route("/priv", priv); // add all routes from /priv to app
 export default app;
