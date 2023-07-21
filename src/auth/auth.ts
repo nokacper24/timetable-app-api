@@ -2,7 +2,8 @@ import { Context, Hono } from "hono";
 import { getCookie } from "hono/cookie";
 import { User } from "../models";
 import { MyError } from "../my_error";
-import { COOKIE_NAME } from "..";
+
+export const COOKIE_NAME = "session";
 
 export const auth_middleware = async (
   c: Context,

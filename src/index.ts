@@ -1,11 +1,11 @@
 import { Hono } from "hono";
 import { MyError } from "./my_error";
-import { priv } from "./auth/auth";
+import { COOKIE_NAME, priv } from "./auth/auth";
 import { setCookie } from "hono/cookie";
 import { UserFull } from "./models";
 import bcrypt from "bcryptjs";
 
-export const COOKIE_NAME = "session";
+
 
 type Context = {
   Bindings: {
@@ -38,7 +38,7 @@ app.post("/login", async (c) => {
   if (!data.username || !data.password) {
     throw new MyError("Invalid login data", 400);
   }
-  let fulluser: UserFull = await c.env.DB.prepare(
+  let fulluser: UserFull | null = await c.env.DB.prepare(
     `SELECT id, username, passwordhash, role
     FROM users WHERE username = ?`
   )
