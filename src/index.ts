@@ -19,9 +19,15 @@ const app = new Hono<Context>();
 app.onError((e, c) => {
   const status_code = e instanceof MyError ? e.status : 500;
   c.status(status_code);
+  let message =  e.message;
+
+  if (status_code === 500) {
+    console.error(`500 error: ${e.message}`);
+    message = "Internal server error!"
+  }
   return c.json({
     status: status_code,
-    message: e.message,
+    message: message,
   });
 });
 
@@ -73,13 +79,20 @@ app.post("/register", async (c) => {
   }
   const salt = await bcrypt.genSalt();
   let passwordhash = await bcrypt.hash(data.password, salt);
-  let _res = await c.env.DB.prepare(
+
+  let existing_user = await c.env.DB.prepare(
+    `SELECT username FROM users WHERE username=?`
+  ).bind(data.username).first();
+  if (existing_user) {
+    throw new MyError("Username already in use!",409)
+  }
+
+  await c.env.DB.prepare(
     `INSERT INTO users (username, passwordhash)
         VALUES (?, ?);`
   )
     .bind(data.username, passwordhash).run();
-    // TODO catch db errors, duplicate username?
-    
+
   return c.json({ message: "registered" });
 });
 
