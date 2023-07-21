@@ -1,7 +1,8 @@
 {
   "scripts": {
     "dev": "wrangler dev src/index.ts",
-    "deploy": "wrangler deploy --minify src/index.ts"
+    "deploy": "wrangler deploy --minify src/index.ts",
+    "db-scr": "wrangler d1 execute timetable-db --local --file=db/schema.sql"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",
