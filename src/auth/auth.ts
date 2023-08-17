@@ -1,5 +1,5 @@
 import { Context, Hono } from "hono";
-import { getCookie } from "hono/cookie";
+import { deleteCookie, getCookie } from "hono/cookie";
 import { User } from "../models";
 import { MyError } from "../my_error";
 
@@ -29,6 +29,7 @@ export const auth_middleware = async (
   }
 
   c.set("user", user);
+  c.set("current_session_id", cookie);
 
   await next();
 };
@@ -39,6 +40,7 @@ type ContextLoggedIn = {
   };
   Variables: {
     user: User;
+    current_session_id: string;
   };
 };
 
@@ -48,4 +50,17 @@ priv.use("*", auth_middleware);
 priv.get("/me", async (c) => {
   const user = c.get("user");
   return c.json(user);
+});
+
+priv.delete("me/logout", async (c) => {
+  await c.env.DB.prepare(
+    `DELETE
+    FROM sessions
+    WHERE session_secret = ?`
+  )
+    .bind(c.get("current_session_id"))
+    .run();
+    deleteCookie(c, COOKIE_NAME);
+    c.status(200)
+    return c.json({ message: "logged out" });
 });
